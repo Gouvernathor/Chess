@@ -30,8 +30,7 @@ PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING = PieceType
 
 FILE_NAMES = ("a", "b", "c", "d", "e", "f", "g", "h")
 RANK_NAMES = ("1", "2", "3", "4", "5", "6", "7", "8")
-class Square(int):
-    __init__ = None # type: ignore
+class Square(enum.IntEnum):
     (
         A1, B1, C1, D1, E1, F1, G1, H1,
         A2, B2, C2, D2, E2, F2, G2, H2,
@@ -42,29 +41,36 @@ class Square(int):
         A7, B7, C7, D7, E7, F7, G7, H7,
         A8, B8, C8, D8, E8, F8, G8, H8,
     ) = range(64)
-    NAMES = tuple(f + r for r in RANK_NAMES for f in FILE_NAMES)
 
     # get the internal index for the given square ("a1" -> 0) : Square.NAMES.index()
     # get the square name from the internal index (0 -> "a1") : Square.NAMES[]
-    @staticmethod
-    def square(fileidx: int, rankidx: int):
+    @classmethod
+    def square(cls, fileidx: int, rankidx: int):
         """
-        takes 0-based indexes, because it takes ints
+        takes 0-based indexes, because 1-based rank index is a string
         """
-        return rankidx*8 + fileidx
-    @staticmethod
-    def fileidx(square):
-        return square & 7 # faster than square%8
-    @staticmethod
-    def rankidx(square):
-        return square >> 3 # faster than square//8
-    @staticmethod
-    def indexes(square):
+        return cls(rankidx*8 + fileidx)
+    def fileidx(self):
+        return self & 7 # faster than square%8
+    def rankidx(self):
+        return self >> 3 # faster than square//8
+    def indexes(self):
         """
         returns file, rank
         """
-        r, f = divmod(square, 8)
+        r, f = divmod(self, 8)
         return f, r
+
+    def __add__(self, other):
+        rv = super().__add__(other)
+        if rv is NotImplemented:
+            return NotImplemented
+        return type(self)(rv)
+    def __sub__(self, other):
+        rv = super().__sub__(other)
+        if rv is NotImplemented:
+            return NotImplemented
+        return type(self)(rv)
 
 UNICODE_PIECE_SYMBOLS = {
     "R": "♖", "r": "♜",
@@ -102,11 +108,11 @@ class Piece:
 
 @dataclasses.dataclass(frozen=True)
 class Move:
-    from_square: Square|int
-    to_square: Square|int
+    from_square: Square
+    to_square: Square
     promotion: PieceType|None = None
     def __str__(self):
-        rv = Square.NAMES[self.from_square] + Square.NAMES[self.to_square]
+        rv = self.from_square.name.lower() + self.to_square.name.lower()
         if self.promotion:
             rv += self.promotion.value
         return rv
@@ -116,8 +122,8 @@ class Move:
         """
         returns file diff, rank diff
         """
-        fromfile, fromrank = Square.indexes(self.from_square)
-        tofile, torank = Square.indexes(self.to_square)
+        fromfile, fromrank = self.from_square.indexes()
+        tofile, torank = self.to_square.indexes()
         return tofile-fromfile, torank-fromrank
 
 class Castling(collections.namedtuple("Castling", ("white_kingside", "white_queenside", "black_kingside", "black_queenside"))):
@@ -160,7 +166,7 @@ class Board:
     flat_placement: tuple[Piece|None] # type: tuple[((Piece|None),)*64]
     active: Color|None
     castling: Castling
-    enpassant: Square|int|None # aka ep_square
+    enpassant: Square|None # aka ep_square
     halfclock: int = 0
     fullclock: int = 1
 
@@ -192,7 +198,7 @@ class Board:
         if enpassant == "-":
             enpassant = None
         else:
-            enpassant = Square.NAMES.index(enpassant)
+            enpassant = Square(enpassant)
 
         return cls(tuple(flat_placement), active, castling, enpassant, int(halfclock), int(fullclock))
 
@@ -216,14 +222,11 @@ class Board:
 
     __str__ = to_fen
 
-    def __getitem__(self, square: Square|int|tuple[int, int]):
+    def __getitem__(self, square: tuple[int, int]):
         """
         takes either a square number (0-63) or a tuple (fileidx 0-7, rankidx 0-7)
         """
-        if isinstance(square, tuple):
-            square = Square.square(*square) # type: ignore
-
-        return self.flat_placement[square] # type: ignore
+        return self.flat_placement[Square.square(*square)]
 
     # to get the type/color somewhere, board[square].kind/color
 
@@ -244,9 +247,9 @@ class Board:
         returns true if the move is a capture or a pawn move
         the move must be valid/legal
         """
-        if self[move.from_square].kind == PAWN: # type: ignore
+        if self.flat_placement[move.from_square].kind == PAWN: # type: ignore
             return True
-        if self[move.to_square] is not None:
+        if self.flat_placement[move.to_square] is not None:
             return True
         return False
 
@@ -255,7 +258,8 @@ class Board:
         generates squares from which the king of the given color is attacked
         """
         king_square = self.king_square(color)
-        for square in range(64):
+        for sqn in range(64):
+            square = Square(sqn)
             piece = self.flat_placement[square]
             if (piece is None) or (piece.color == color):
                 continue
@@ -285,7 +289,8 @@ class Board:
         if color is None:
             return self.is_stalemate(WHITE) or self.is_stalemate(BLACK)
 
-        for square, piece in enumerate(self.flat_placement):
+        for sqn, piece in enumerate(self.flat_placement):
+            square = Square(sqn)
             if piece is not None and piece.color == color:
                 for move in self.generate_moves(square):
                     if not self.make_move(move).is_check(color):
@@ -294,6 +299,7 @@ class Board:
         return True
 
     def is_checkmate(self, color: Color|None = None):
+        self.generate_castling_moves(Color.WHITE)
         return self.is_check(color) and self.is_stalemate(color)
 
     def generate_castling_moves(self, color):
@@ -303,20 +309,20 @@ class Board:
         """
         if color == WHITE:
             if self.castling.white_kingside:
-                if self[Square.G1] is None and self[Square.F1] is None:
+                if self.flat_placement[Square.G1] is None and self.flat_placement[Square.F1] is None:
                     yield Move(Square.E1, Square.G1)
             if self.castling.white_queenside:
-                if self[Square.D1] is None and self[Square.C1] is None and self[Square.B1] is None:
+                if self.flat_placement[Square.D1] is None and self.flat_placement[Square.C1] is None and self.flat_placement[Square.B1] is None:
                     yield Move(Square.E1, Square.C1)
         else:
             if self.castling.black_kingside:
-                if self[Square.G8] is None and self[Square.F8] is None:
+                if self.flat_placement[Square.G8] is None and self.flat_placement[Square.F8] is None:
                     yield Move(Square.E8, Square.G8)
             if self.castling.black_queenside:
-                if self[Square.D8] is None and self[Square.C8] is None and self[Square.B8] is None:
+                if self.flat_placement[Square.D8] is None and self.flat_placement[Square.C8] is None and self.flat_placement[Square.B8] is None:
                     yield Move(Square.E8, Square.C8)
 
-    def generate_moves(self, square: Square|int|None = None, castling=True):
+    def generate_moves(self, square: Square|None = None, castling=True):
         """
         generates all possible moves from the given location on the current board
         if not given a starting square, generates all possible moves of the current player
@@ -324,7 +330,8 @@ class Board:
         does not check if the moves end up in self-check
         """
         if square is None:
-            for square in range(64):
+            for sqn in range(64):
+                square = Square(sqn)
                 piece = self.flat_placement[square]
                 if piece is not None and piece.color == self.active:
                     yield from self.generate_moves(square)
@@ -335,7 +342,7 @@ class Board:
             return
         kind = piece.kind
         color = piece.color
-        fileidx, rankidx = Square.indexes(square)
+        fileidx, rankidx = square.indexes()
 
         if kind == PAWN:
             enpassant = self.enpassant
@@ -486,9 +493,9 @@ class Board:
         if promotion is not None:
             if piece.kind != PAWN:
                 return False
-            if piece.color == WHITE and Square.rankidx(to_square) != 7:
+            if piece.color == WHITE and to_square.rankidx() != 7:
                 return False
-            if piece.color == BLACK and Square.rankidx(to_square) != 0:
+            if piece.color == BLACK and to_square.rankidx() != 0:
                 return False
 
         # check the destination
@@ -566,7 +573,7 @@ class Board:
                 enpassant = from_square + 8
             elif rankdiff == -2:
                 enpassant = from_square - 8
-            elif abs(filediff) == 1 and self[to_square] is None: # capturing enpassant
+            elif abs(filediff) == 1 and self.flat_placement[to_square] is None: # capturing enpassant
                 if rankdiff > 0: # white eating, a priori
                     eaten = to_square - 8
                 else:
@@ -595,10 +602,11 @@ class Board:
         return Board(tuple(flat_placement), Color(not self.active), castling, enpassant, halfclock, fullclock)
 
     def enumerate_raw(self, skip_empty=False):
-        for square, piece in enumerate(self.flat_placement):
+        for sqn, piece in enumerate(self.flat_placement):
+            square = Square(sqn)
             if skip_empty and (piece is None):
                 continue
-            yield square, *Square.indexes(square), piece
+            yield square, *square.indexes(), piece
 
     def enumerate(self, skip_empty=False):
         # iterate in reverse rank order
