@@ -7,27 +7,26 @@ _constant = True
 import collections
 import dataclasses
 import enum
+import functools
 
 class Color(enum.IntEnum):
-    BLACK = enum.auto()
-    WHITE = enum.auto()
-BLACK, WHITE = Color.BLACK, Color.WHITE
+    BLACK = False
+    WHITE = True
+BLACK, WHITE = Color
 
 WHITE_BOARD_COLOR = "#f0d9b5"
 BLACK_BOARD_COLOR = "#b58863"
 
-PieceType = int
-PIECE_TYPES = (PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING) = range(1, 7)
-PIECE_SYMBOLS:tuple[str] = (None, "p", "n", "b", "r", "q", "k") # type: ignore
-PIECE_NAMES:tuple[str] = (None, "pawn", "knight", "bishop", "rook", "queen", "king") # type: ignore
-UNICODE_PIECE_SYMBOLS = {
-    "R": "♖", "r": "♜",
-    "N": "♘", "n": "♞",
-    "B": "♗", "b": "♝",
-    "Q": "♕", "q": "♛",
-    "K": "♔", "k": "♚",
-    "P": "♙", "p": "♟",
-}
+@functools.total_ordering
+class PieceType(enum.Enum):
+    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING = "p", "n", "b", "r", "q", "k"
+    def __init__(self, value):
+        self.cmp_value = len(type(self).__members__) + 1
+    def __lt__(self, other):
+        if type(self) is type(other):
+            return self.cmp_value < other.cmp_value
+        return NotImplemented
+PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING = PieceType
 
 FILE_NAMES = ("a", "b", "c", "d", "e", "f", "g", "h")
 RANK_NAMES = ("1", "2", "3", "4", "5", "6", "7", "8")
@@ -67,12 +66,20 @@ class Square(int):
         r, f = divmod(square, 8)
         return f, r
 
+UNICODE_PIECE_SYMBOLS = {
+    "R": "♖", "r": "♜",
+    "N": "♘", "n": "♞",
+    "B": "♗", "b": "♝",
+    "Q": "♕", "q": "♛",
+    "K": "♔", "k": "♚",
+    "P": "♙", "p": "♟",
+}
 @dataclasses.dataclass(frozen=True, order=True)
 class Piece:
     kind: PieceType
     color: Color
     def symbol(self) -> str:
-        rv = PIECE_SYMBOLS[self.kind]
+        rv = self.kind.value
         if self.color == BLACK:
             return rv.lower()
         elif self.color == WHITE:
@@ -82,7 +89,7 @@ class Piece:
         return UNICODE_PIECE_SYMBOLS[self.symbol()]
     @classmethod
     def from_symbol(cls, symbol):
-        return cls(PIECE_SYMBOLS.index(symbol.lower()), BLACK if symbol.islower() else WHITE)
+        return cls(PieceType(symbol.lower()), Color(symbol.isupper()))
 
     def displayable(self):
         if self.color == WHITE:
@@ -91,7 +98,7 @@ class Piece:
             rv = "b"
         else:
             return None
-        return rv + PIECE_SYMBOLS[self.kind]
+        return rv + self.kind.value
 
 @dataclasses.dataclass(frozen=True)
 class Move:
@@ -101,7 +108,7 @@ class Move:
     def __str__(self):
         rv = Square.NAMES[self.from_square] + Square.NAMES[self.to_square]
         if self.promotion:
-            rv += PIECE_SYMBOLS[self.promotion]
+            rv += self.promotion.value
         return rv
     replace = dataclasses.replace
 
