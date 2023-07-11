@@ -318,23 +318,24 @@ class Board:
     def is_checkmate(self, color: Color|None = None):
         return self.is_check(color) and self.is_stalemate(color)
 
-    def generate_castling_moves(self, color):
+    def generate_castling_moves(self, *, color: Color|None = None, square: Square|None = None):
         """
-        generates all possible castling moves of the given color on the current board
+        generates all possible castling moves on the current board, of the given color if provided and from the given square if provided
         does not check if the moves end up in self-check
         """
-        if color == WHITE:
-            if self.castling.white_kingside:
+        castling = self.castling
+        if (color in (WHITE, None)) and (square in (Square.E1, None)):
+            if castling.white_kingside:
                 if self.flat_placement[Square.G1] is None and self.flat_placement[Square.F1] is None:
                     yield Move(Square.E1, Square.G1)
-            if self.castling.white_queenside:
+            if castling.white_queenside:
                 if self.flat_placement[Square.D1] is None and self.flat_placement[Square.C1] is None and self.flat_placement[Square.B1] is None:
                     yield Move(Square.E1, Square.C1)
-        else:
-            if self.castling.black_kingside:
+        if (color in (BLACK, None)) and (square in (Square.E8, None)):
+            if castling.black_kingside:
                 if self.flat_placement[Square.G8] is None and self.flat_placement[Square.F8] is None:
                     yield Move(Square.E8, Square.G8)
-            if self.castling.black_queenside:
+            if castling.black_queenside:
                 if self.flat_placement[Square.D8] is None and self.flat_placement[Square.C8] is None and self.flat_placement[Square.B8] is None:
                     yield Move(Square.E8, Square.C8)
 
