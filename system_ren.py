@@ -6,9 +6,12 @@ _constant = True
 
 import collections
 import dataclasses
+import enum
 
-Color = int
-BLACK, WHITE = range(2)
+class Color(enum.IntEnum):
+    BLACK = enum.auto()
+    WHITE = enum.auto()
+BLACK, WHITE = Color.BLACK, Color.WHITE
 
 WHITE_BOARD_COLOR = "#f0d9b5"
 BLACK_BOARD_COLOR = "#b58863"
@@ -64,7 +67,7 @@ class Square(int):
         r, f = divmod(square, 8)
         return f, r
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, order=True)
 class Piece:
     kind: PieceType
     color: Color
@@ -148,7 +151,7 @@ class Board:
     """
 
     flat_placement: tuple[Piece|None] # type: tuple[((Piece|None),)*64]
-    active: Color|int|None
+    active: Color|None
     castling: Castling
     enpassant: Square|int|None # aka ep_square
     halfclock: int = 0
@@ -582,7 +585,7 @@ class Board:
         # handle normal move of the piece
         flat_placement[to_square] = piece
 
-        return Board(tuple(flat_placement), not self.active, castling, enpassant, halfclock, fullclock)
+        return Board(tuple(flat_placement), Color(not self.active), castling, enpassant, halfclock, fullclock)
 
     def enumerate_raw(self, skip_empty=False):
         for square, piece in enumerate(self.flat_placement):
