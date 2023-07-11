@@ -1,9 +1,6 @@
-screen chess_board(fen=chess.START_FEN, white_board_color=chess.WHITE_BOARD_COLOR, black_board_color=chess.BLACK_BOARD_COLOR):
-    python:
-        if fen:
-            board = chess.Board.from_fen(fen)
-        else:
-            board = chess.Board.empty
+screen chess_board(board=chess.Board.empty,
+    white_board_color=chess.WHITE_BOARD_COLOR, black_board_color=chess.BLACK_BOARD_COLOR
+    ):
     grid 8 8:
         xysize (1., 1.)
         align (.5, .5)
@@ -18,4 +15,4 @@ screen chess_board(fen=chess.START_FEN, white_board_color=chess.WHITE_BOARD_COLO
                 else:
                     add black_board_color
                 if piece is not None:
-                    add piece.displayable() align (.5, .5)
+                    add piece.displayable() align (.5, .5) fit "contain"
