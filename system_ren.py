@@ -316,7 +316,6 @@ class Board:
         return True
 
     def is_checkmate(self, color: Color|None = None):
-        self.generate_castling_moves(Color.WHITE)
         return self.is_check(color) and self.is_stalemate(color)
 
     def generate_castling_moves(self, color):
