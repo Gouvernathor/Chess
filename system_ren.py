@@ -498,7 +498,7 @@ class Board:
                 if (target is None) or (target.color != color):
                     yield Move(square, destination)
 
-    def is_legal(self, move: Move, check_check=True):
+    def is_legal(self, move: Move, check_check=True, check_turn=True):
         """
         returns true if the move is legal
         """
@@ -512,7 +512,7 @@ class Board:
             return False
 
         # check the turn
-        if piece.color != self.active:
+        if check_turn and (piece.color != self.active):
             return False
 
         # check promotion
