@@ -61,6 +61,11 @@ class Square(enum.IntEnum):
         r, f = divmod(self, 8)
         return f, r
 
+    @classmethod
+    def range(cls, start=64, *args):
+        for i in range(start, *args):
+            yield cls(i)
+
     def __add__(self, other):
         rv = super().__add__(other)
         if rv is NotImplemented:
@@ -117,6 +122,17 @@ class Move:
             rv += self.promotion.value
         return rv
     replace = dataclasses.replace
+
+    def reverse(self):
+        """
+        Warning : reverses of a promotion move are not valid moves.
+        Reversing those again will not give the original move.
+
+        Otherwise, the reverse of the reverse is the original move.
+        """
+        if self.promotion is not None:
+            return Move(self.to_square, self.from_square, PAWN)
+        return Move(self.to_square, self.from_square)
 
     def diff_tuple(self):
         """
@@ -258,8 +274,7 @@ class Board:
         generates squares from which the king of the given color is attacked
         """
         king_square = self.king_square(color)
-        for sqn in range(64):
-            square = Square(sqn)
+        for square in Square.range():
             piece = self.flat_placement[square]
             if (piece is None) or (piece.color == color):
                 continue
@@ -330,8 +345,7 @@ class Board:
         does not check if the moves end up in self-check
         """
         if square is None:
-            for sqn in range(64):
-                square = Square(sqn)
+            for square in Square.range():
                 piece = self.flat_placement[square]
                 if piece is not None and piece.color == self.active:
                     yield from self.generate_moves(square)
