@@ -271,16 +271,18 @@ class Board:
 
     def generate_checkers(self, color: Color):
         """
-        generates squares from which the king of the given color is attacked
+        generates moves by which the king of the given color is attacked
+        moves that would put the king of the opposite color in check are allowed (per the rules)
         """
+
         king_square = self.king_square(color)
         for square in Square.range():
             piece = self.flat_placement[square]
             if (piece is None) or (piece.color == color):
                 continue
             for move in self.generate_moves(square):
-                if move.to_square == king_square and self.is_legal(move, check_check=True):
-                    yield square
+                if move.to_square == king_square and self.is_legal(move, check_check=False, check_turn=False):
+                    yield move
                     break
 
     def is_check(self, color: Color|None = None):
