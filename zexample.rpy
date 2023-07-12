@@ -99,6 +99,9 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
         play sound take
 
     # when a move has been made
+    # can't save the move itself for later short of saving the whole board,
+    # because the algebraic notation requires the board it was applied to
+    $ move_history.append(board.algebraic_notation(chosen_move))
     $ board = board.make_move(chosen_move)
 
     # updating loss counts
@@ -158,5 +161,5 @@ screen main_chess_display(board, *args, sensitive=True, **kwargs):
         at topright
         text "Move history :"
         null height 30
-        for move in move_history: # add viewport
-            text board.algebraic_notation(move)
+        for move in reversed(move_history): # add viewport
+            text move
