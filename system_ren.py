@@ -559,18 +559,20 @@ class Board:
             if dest_piece.color == piece.color:
                 return False
 
+        filediff, rankdiff = move.diff_tuple()
+
         # castling
-        # test if the intermediate square, aka the rook's destination, is under attack
-        if (piece.kind == KING) and not (check_check and self.is_check(piece.color)):
-            filediff, rankdiff = move.diff_tuple()
-            if abs(filediff) > 1 or abs(rankdiff) > 1:
-                # so this is a castling move
-                # test if we would generate it
-                # print("castling move not in generate_castling_moves")
-                return move in self.generate_castling_moves(color=piece.color)
+        # TODO: test if the intermediate square, aka the rook's destination, is under attack
+        if (piece.kind == KING) and not (check_check and self.is_check(piece.color)) and (abs(filediff) > 1 or abs(rankdiff) > 1):
+            # so this is a castling move
+            # test if we would generate it
+            if move not in self.generate_castling_moves(color=piece.color):
+                return False
+            # but still leave room for the check check
 
         # kind-dependant check
-        if move.replace(promotion=None) not in self.generate_moves(from_square, castling=False):
+        # only if it's not a castling move
+        elif move.replace(promotion=None) not in self.generate_moves(from_square, castling=False):
             return False
 
         if check_check:
