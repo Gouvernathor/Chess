@@ -285,7 +285,8 @@ class Board:
             piece = self.flat_placement[it_square]
             if (piece is None) or (piece.color == color):
                 continue
-            for move in self.generate_moves(it_square):
+            for move in self.generate_moves(it_square, castling=False):
+            # castling = False because a castle move could never kill : the destination squares for both the king and the rook must be empty
                 if move.to_square == square and self.is_legal(move, check_check=False, check_turn=False):
                     yield move
                     break
@@ -569,7 +570,7 @@ class Board:
             return False
 
         if check_check:
-            # check if the move puts the king in check
+            # check if the move puts our own king in check
             if self.make_move(move).is_check(piece.color):
                 return False
 
@@ -681,7 +682,7 @@ class Board:
         (5) will be empty if there is no promotion
         (6) will be empty if there is no miscellanous information
 
-        The move is expected to take place *from* the current state of the board, not *to* it.
+        The move is expected to take place *from* the current state of the board, not to arrive *to* it.
         You can apply move.reverse() on the board to get the previous state-ish and get the algebraic notation from it.
         Ish, because if the move was a taking one that information will be lost.
         """
@@ -703,6 +704,7 @@ class Board:
 
         capture = ""
         if self.flat_placement[to_square] is not None:
+            # TODO: en passant
             capture = "x"
 
         destination = to_square.name.lower()
@@ -722,7 +724,7 @@ class Board:
             left = right = ""
             from_file, from_rank = from_square.indexes()
             movenoprom = move.replace(promotion=None)
-            # got to figure out if there was another way to get there
+            # got to figure out if there was another legal way to get there
             for gen_move in self.generate_moves():
                 if gen_move.to_square != to_square:
                     continue
@@ -730,8 +732,7 @@ class Board:
                 if gen_move == movenoprom:
                     continue
 
-                gen_after = self.make_move(gen_move)
-                if gen_after.is_check(self.active):
+                if not self.is_legal(gen_move):
                     continue
 
                 gen_from_file, gen_from_rank = gen_move.from_square.indexes()
