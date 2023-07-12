@@ -67,11 +67,15 @@ class Square(enum.IntEnum):
             yield cls(i)
 
     def __add__(self, other):
+        if isinstance(other, Square):
+            return NotImplemented
         rv = super().__add__(other)
         if rv is NotImplemented:
             return NotImplemented
         return type(self)(rv)
     def __sub__(self, other):
+        if isinstance(other, Square):
+            return NotImplemented
         rv = super().__sub__(other)
         if rv is NotImplemented:
             return NotImplemented
