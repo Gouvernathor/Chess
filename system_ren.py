@@ -248,9 +248,9 @@ class Board:
 
     def king_square(self, color: Color):
         found = Piece(KING, color)
-        for square, piece in enumerate(self.flat_placement):
+        for sqn, piece in enumerate(self.flat_placement):
             if piece == found:
-                return square
+                return Square(sqn)
         raise ValueError("King not found")
 
     def pieces_counter(self):
