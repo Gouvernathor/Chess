@@ -729,8 +729,14 @@ class Board:
         return piece_letter, origin, capture, destination, promotion, suffix
 
     def algebraic_notation(self, move: Move, long=False, pawn=False, figure=False):
-        # castling override
-        # still apply suffixes though
+        piece = self.flat_placement[move.from_square]
+        if (piece is not None) and (piece.kind == KING) and abs(move.from_square - move.to_square) == 2:
+            # castling
+            suffix = self.algebraic_suffix(move)
+            if move.to_square in (Square.G1, Square.G8):
+                return "0-0" + suffix
+            elif move.to_square in (Square.C1, Square.C8):
+                return "0-0-0" + suffix
 
         return "".join(self.algebraic_notation_tuple(move, long=long, pawn=pawn, figure=figure))
 
