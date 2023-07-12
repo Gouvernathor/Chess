@@ -637,6 +637,103 @@ class Board:
 
         return Board(tuple(flat_placement), Color(not self.active), castling, enpassant, halfclock, fullclock)
 
+    def algebraic_suffix(self, move: Move, color: Color|None = None, dagger=True):
+        """
+        returns the suffix of the move in algebraic notation
+        only checks for the given color if passed, otherwise checks for any color
+        """
+        after = self.make_move(move)
+        if after.is_check(color):
+            if after.is_stalemate(color):
+                return "‡" if dagger else "#"
+            return "†" if dagger else "+"
+        return ""
+
+    def algebraic_notation_tuple(self, move: Move, long=False, pawn=False, figure=False):
+        """
+        Returns the algebraic notation tuple of the move, containing
+        (1) the moving piece, (2) the starting square, (3) the capture flag, (4) the destination square, (5) the promotion, (6) check/mate/misc suffix,
+        (1) will be empty if pawn is False
+        (1) will be a unicode figure if figure is True, a cased letter otherwise
+        (2) may be empty or only contain one character, if long is False
+        (3) will be x or empty
+        (5) will be empty if there is no promotion
+        (6) will be empty if there is no miscellanous information
+
+        The move is expected to take place *from* the current state of the board, not *to* it.
+        You can apply move.reverse() on the board to get the previous state-ish and get the algebraic notation from it.
+        Ish, because if the move was a taking one that information will be lost.
+        """
+        from_square = move.from_square
+        to_square = move.to_square
+        promotion = move.promotion
+        piece = self.flat_placement[from_square]
+        if piece is None:
+            # raise ValueError("No piece on square, invalid move")
+            piece = Piece(PAWN, self.active) # type: ignore
+
+        if pawn or (piece.kind != PAWN):
+            if figure:
+                piece_letter = piece.unicode_symbol()
+            else:
+                piece_letter = piece.symbol()
+        else:
+            piece_letter = ""
+
+        capture = ""
+        if self.flat_placement[to_square] is not None:
+            capture = "x"
+
+        destination = to_square.name.lower()
+
+        if promotion is None:
+            promotion = ""
+        else:
+            promotion = promotion.value.upper()
+
+        suffix = self.algebraic_suffix(move)
+
+        if long or not self.is_legal(move):
+            # simple case
+            # illegal moves aren't implicit, so they can't be shortened
+            origin = from_square.name.lower()
+        else:
+            left = right = ""
+            from_file, from_rank = from_square.indexes()
+            movenoprom = move.replace(promotion=None)
+            # got to figure out if there was another way to get there
+            for gen_move in self.generate_moves():
+                if gen_move.to_square != to_square:
+                    continue
+
+                if gen_move == movenoprom:
+                    continue
+
+                gen_after = self.make_move(gen_move)
+                if gen_after.is_check(self.active):
+                    continue
+
+                gen_from_file, gen_from_rank = gen_move.from_square.indexes()
+                if gen_from_file == from_file:
+                    print("file", gen_move)
+                    left = FILE_NAMES[from_file]
+                if gen_from_rank == from_rank:
+                    print("rank", gen_move)
+                    right = RANK_NAMES[from_rank]
+
+                if left and right:
+                    break
+
+            origin = left + right
+
+        return piece_letter, origin, capture, destination, promotion, suffix
+
+    def algebraic_notation(self, move: Move, long=False, pawn=False, figure=False):
+        # castling override
+        # still apply suffixes though
+
+        return "".join(self.algebraic_notation_tuple(move, long=long, pawn=pawn, figure=figure))
+
     def enumerate_raw(self, skip_empty=False):
         for sqn, piece in enumerate(self.flat_placement):
             square = Square(sqn)
