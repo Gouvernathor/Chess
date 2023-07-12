@@ -269,21 +269,38 @@ class Board:
             return True
         return False
 
+    def generate_attackers(self, square: Square, color: Color):
+        """
+        generates moves by the opposite color which attack the given square
+        moves that would put or leave the king of the opposite color in check are allowed (per the rules)
+        """
+        for it_square in Square.range():
+            piece = self.flat_placement[it_square]
+            if (piece is None) or (piece.color == color):
+                continue
+            for move in self.generate_moves(it_square):
+                if move.to_square == square and self.is_legal(move, check_check=False, check_turn=False):
+                    yield move
+                    break
+
+    def is_under_attack(self, square: Square, color: Color):
+        """
+        returns true if the given square is attacked by the opposite color
+        """
+        try:
+            next(self.generate_attackers(square, color))
+        except StopIteration:
+            return False
+        else:
+            return True
+
     def generate_checkers(self, color: Color):
         """
         generates moves by which the king of the given color is attacked
-        moves that would put the king of the opposite color in check are allowed (per the rules)
+        moves that would put or leave the king of the opposite color in check are allowed (per the rules)
         """
-
         king_square = self.king_square(color)
-        for square in Square.range():
-            piece = self.flat_placement[square]
-            if (piece is None) or (piece.color == color):
-                continue
-            for move in self.generate_moves(square):
-                if move.to_square == king_square and self.is_legal(move, check_check=False, check_turn=False):
-                    yield move
-                    break
+        yield from self.generate_attackers(king_square, color)
 
     def is_check(self, color: Color|None = None):
         """
