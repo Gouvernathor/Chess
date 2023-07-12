@@ -238,11 +238,18 @@ class Board:
 
     __str__ = to_fen
 
-    def __getitem__(self, square: tuple[int, int]):
+    def __getitem__(self, square: tuple[int|str, int|str]):
         """
-        takes either a square number (0-63) or a tuple (fileidx 0-7, rankidx 0-7)
+        takes a tuple of ints (fileidx 0-7, rankidx 0-7),
+        or strs (filename "a"-"h", rankname "1"-"8")
         """
-        return self.flat_placement[Square.square(*square)]
+        f, r = square
+        if isinstance(f, str):
+            f = FILE_NAMES.index(f)
+        if isinstance(r, str):
+            r = RANK_NAMES.index(r)
+
+        return self.flat_placement[Square.square(f, r)]
 
     # to get the type/color somewhere, board[square].kind/color
 
