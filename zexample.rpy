@@ -32,9 +32,9 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
         if board.is_check(board.active):
             # highlight the king and the checking pieces
             python:
-                store.highlight_properties[board.king_square(board.active)] |= orange_highlight.copy()
+                store.highlight_properties[board.king_square(board.active)] |= orange_highlight
                 for checkermove in board.generate_checkers(board.active):
-                    store.highlight_properties[checkermove.from_square] |= red_highlight.copy()
+                    store.highlight_properties[checkermove.from_square] |= red_highlight
 
         call screen main_chess_display(board, action_function=Return, properties_function=highlight_properties.get)
 
@@ -58,7 +58,7 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
                         bra = [_return]
                         for move in board.generate_legal_moves(_return):
                             bra.append(move)
-                            store.highlight_properties[move.to_square] |= blue_highlight.copy()
+                            store.highlight_properties[move.to_square] |= blue_highlight
                             store.highlight_properties[move.to_square]["action"] = Return(move)
 
                     else:
