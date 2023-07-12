@@ -575,6 +575,11 @@ class Board:
 
         return True
 
+    def generate_legal_moves(self, square: Square|None = None):
+        for move in self.generate_moves(square):
+            if self.is_legal(move):
+                yield move
+
     def make_move(self, move: Move):
         """
         aka push
