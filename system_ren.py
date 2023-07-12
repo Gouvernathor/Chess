@@ -385,14 +385,21 @@ class Board:
         fileidx, rankidx = square.indexes()
 
         if kind == PAWN:
+            if rankidx == (7 if color == WHITE else 0):
+                # not supposed to happen per official rules bc promotion is mandatory to a non-pawn kind
+                # but you never know who might program their game badly
+                return
+
             enpassant = self.enpassant
             direction = 1 if color == WHITE else -1
+
             # front
             if self.flat_placement[square+8*direction] is None:
                 yield Move(square, square+8*direction)
             # front 2
             if rankidx == (1 if color == WHITE else 6) and self.flat_placement[square+16*direction] is None:
                 yield Move(square, square+16*direction)
+
             if color == WHITE:
                 # capture left
                 if fileidx != 0:
