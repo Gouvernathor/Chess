@@ -555,12 +555,14 @@ class Board:
                 return False
 
         # castling
-        if (piece.kind == KING) and not self.is_check(piece.color):
+        # test if the intermediate square, aka the rook's destination, is under attack
+        if (piece.kind == KING) and not (check_check and self.is_check(piece.color)):
             filediff, rankdiff = move.diff_tuple()
-            if abs(filediff)+abs(rankdiff) != 1:
-                # check castling
-                if move not in self.generate_castling_moves(color=piece.color):
-                    return False
+            if abs(filediff) > 1 or abs(rankdiff) > 1:
+                # so this is a castling move
+                # test if we would generate it
+                # print("castling move not in generate_castling_moves")
+                return move in self.generate_castling_moves(color=piece.color)
 
         # kind-dependant check
         if move.replace(promotion=None) not in self.generate_moves(from_square, castling=False):
