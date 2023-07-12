@@ -752,7 +752,7 @@ class Board:
 
     def algebraic_notation(self, move: Move, long=False, pawn=False, figure=False):
         piece = self.flat_placement[move.from_square]
-        if (piece is not None) and (piece.kind == KING) and abs(move.from_square - move.to_square) == 2:
+        if (piece is not None) and (piece.kind == KING) and abs(move.from_square.value - move.to_square.value) == 2:
             # castling
             suffix = self.algebraic_suffix(move)
             if move.to_square in (Square.G1, Square.G8):
