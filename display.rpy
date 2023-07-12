@@ -30,3 +30,83 @@ screen chess_board(board=chess.Board.empty,
                         add piece.displayable() align (.5, .5) fit "contain"
                     action action_function(square)
                     properties properties_function(square)
+
+init python:
+    from math import sqrt
+
+    class Hexagon(renpy.Displayable):
+        def __init__(self, color, linewidth=0, regular=False, side=None, **properties):
+            """
+            Regular imposes a regular hexagon within the available space.
+            Side imposes a regular hexagon with the given side length, overriding regular.
+            """
+            # TODO: merge the two attributes but keep the two parameters
+            super().__init__(**properties)
+            self.color = color
+            self.linewidth = linewidth
+            self.regular = regular
+            self.side = side
+
+        # TODO: add a static method passed a canvas and some sizes and writes the thing on it
+        # so that the process can be scaled
+        def render(self, width, height, st, at):
+            if self.side is not None:
+                height = 2*self.side
+                width = sqrt(3)*self.side
+
+            rv = renpy.Render(width, height)
+
+            if self.regular:
+                factor = sqrt(3)/2
+                if width > factor*height:
+                    newidth = factor*height
+                    newheight = height
+                else:
+                    newidth = width
+                    newheight = width/factor
+                subx = (width-newidth)/2
+                suby = (height-newheight)/2
+                sub = rv.subsurface((subx, suby, newidth, newheight))
+                cv = sub.canvas()
+            else:
+                newidth = width
+                newheight = height
+                cv = rv.canvas()
+
+            top_point = (newidth/2, 0)
+            bottom_point = (newidth/2, newheight)
+
+            a = -3
+            b = 4*newheight
+            c = newidth**2/4 - newheight**2
+            delta = b**2-4*a*c
+            x1 = (-b+sqrt(delta))/(2*a)
+            x2 = (-b-sqrt(delta))/(2*a)
+            print(x1, x2, newidth, newheight)
+            if 0 < x1 < newheight/2:
+                x = x1
+            else:
+                x = x2
+
+            topleft_point = (0, x)
+            bottomleft_point = (0, newheight-x)
+            topright_point = (newidth, x)
+            bottomright_point = (newidth, newheight-x)
+
+            cv.polygon(
+                self.color,
+                [
+                    top_point,
+                    topright_point,
+                    bottomright_point,
+                    bottom_point,
+                    bottomleft_point,
+                    topleft_point,
+                ],
+                self.linewidth,
+            )
+
+            if self.regular:
+                rv.blit(sub, (subx, suby))
+
+            return rv
