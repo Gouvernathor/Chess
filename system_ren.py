@@ -339,8 +339,6 @@ class Board:
                 if self.flat_placement[Square.D8] is None and self.flat_placement[Square.C8] is None and self.flat_placement[Square.B8] is None:
                     yield Move(Square.E8, Square.C8)
 
-    recursion_sentinel = False
-
     def generate_moves(self, square: Square|None = None, castling=True):
         """
         generates all possible moves from the given location on the current board
@@ -351,7 +349,7 @@ class Board:
         if square is None:
             for square in Square.range():
                 piece = self.flat_placement[square]
-                if piece is not None and piece.color == self.active:
+                if (piece is not None) and (piece.color == self.active):
                     yield from self.generate_moves(square)
             return
 
@@ -400,16 +398,9 @@ class Board:
 
         elif kind == KING:
             if castling:
-                # some recursion protection
-                generate_castling_moves = recsen = Board.recursion_sentinel
-                if not recsen:
-                    Board.recursion_sentinel = True
-                    try:
-                        generate_castling_moves = not self.is_check(color)
-                    finally:
-                        Board.recursion_sentinel = recsen
-                if generate_castling_moves:
-                    yield from self.generate_castling_moves(color)
+                castling_moves = set(self.generate_castling_moves(color=color, square=square))
+                if castling_moves and not self.is_check(color):
+                    yield from castling_moves
 
             for rankdiff in (-1, 0, 1):
                 if rankidx == 0 and rankdiff == -1:
@@ -537,7 +528,7 @@ class Board:
             filediff, rankdiff = move.diff_tuple()
             if abs(filediff)+abs(rankdiff) != 1:
                 # check castling
-                if move not in self.generate_castling_moves(piece.color):
+                if move not in self.generate_castling_moves(color=piece.color):
                     return False
 
         # kind-dependant check
