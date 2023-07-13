@@ -1,4 +1,5 @@
 import renpy # type: ignore
+python_object = object
 """renpy
 init python in chess:
 """
@@ -73,6 +74,7 @@ class Square(enum.IntEnum):
         if rv is NotImplemented:
             return NotImplemented
         return type(self)(rv)
+    __radd__ = __add__
     def __sub__(self, other):
         if isinstance(other, Square):
             return NotImplemented
@@ -80,6 +82,7 @@ class Square(enum.IntEnum):
         if rv is NotImplemented:
             return NotImplemented
         return type(self)(rv)
+    # rsub doesn't make sense, just like neg
 
 UNICODE_PIECE_SYMBOLS = {
     "R": "♖", "r": "♜",
@@ -90,7 +93,7 @@ UNICODE_PIECE_SYMBOLS = {
     "P": "♙", "p": "♟",
 }
 @dataclasses.dataclass(frozen=True, order=True)
-class Piece:
+class Piece(python_object):
     kind: PieceType
     color: Color
     def symbol(self) -> str:
@@ -116,7 +119,7 @@ class Piece:
         return rv + self.kind.value
 
 @dataclasses.dataclass(frozen=True)
-class Move:
+class Move(python_object):
     from_square: Square
     to_square: Square
     promotion: PieceType|None = None
@@ -178,7 +181,7 @@ class Castling(collections.namedtuple("Castling", ("white_kingside", "white_quee
     __str__ = to_fen
 
 @dataclasses.dataclass(frozen=True)
-class Board:
+class Board(python_object):
     """
     contains the same information as a FEN
     """
