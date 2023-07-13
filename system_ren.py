@@ -404,9 +404,10 @@ class Board(python_object):
             # front
             if self.flat_placement[square+8*direction] is None:
                 yield Move(square, square+8*direction)
-            # front 2
-            if rankidx == (1 if color == WHITE else 6) and self.flat_placement[square+16*direction] is None:
-                yield Move(square, square+16*direction)
+
+                # front 2
+                if rankidx == (1 if color == WHITE else 6) and self.flat_placement[square+16*direction] is None:
+                    yield Move(square, square+16*direction)
 
             if color == WHITE:
                 # capture left
