@@ -77,6 +77,10 @@ class Directions(HexVector, enum.Enum):
     BOTTOM = (0, 1)
     BOTTOMLEFT = (-1, 1)
     TOPLEFT = (-1, 0)
+    def __eq__(self, other, /):
+        if not isinstance(other, HexVector):
+            return NotImplemented
+        return self.qr == other.qr
 
 class Hex(HexVector):
     def __init__(self, *args, **kwargs):
@@ -154,7 +158,12 @@ class Hex(HexVector):
         if rv is NotImplemented:
             return NotImplemented
         return type(self)(rv.q, rv.r)
-    __mul__ = __truediv__ = __pos__ = __neg__ = (lambda *args: NotImplemented)
+    def __sub__(self, other, /):
+        if isinstance(other, Hex):
+            return HexVector(self.q - other.q, self.r - other.r)
+        return super().__sub__(other)
+    __mul__ = __truediv__ = (lambda *args: NotImplemented)
+    __pos__ = __neg__ = None
 
 from store.chess import Piece # type: ignore
 
