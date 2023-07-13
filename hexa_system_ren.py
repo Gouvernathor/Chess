@@ -15,8 +15,8 @@ import math
 from store import chess # type: ignore
 
 class Color(enum.IntEnum):
-    WHITE = 0
-    BLACK = 1
+    BLACK = 0
+    WHITE = 1
     RED = 0
     GREEN = 1
     BLUE = 2
