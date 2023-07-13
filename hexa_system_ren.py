@@ -210,7 +210,6 @@ class Board(python_object):
     )
 
     active: Color|None
-    castling: Castling
     enpassant: Hex|None
     halfclock: int = 0
     fullclock: int = 1
@@ -247,4 +246,4 @@ class Board(python_object):
         del rv[None]
         return rv
 
-Board.empty = Board((None,)*91, None, None, None)
+Board.empty = Board((None,)*91, None, None)
