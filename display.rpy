@@ -127,7 +127,7 @@ init python:
 
             return rv
 
-screen hex_chess_board(#board=chess.hex.Board.empty,
+screen hex_chess_board(board=chess.hex.Board.empty,
     white_board_color=chess.hex.WHITE_BOARD_COLOR, grey_board_color=chess.hex.GREY_BOARD_COLOR, black_board_color=chess.hex.BLACK_BOARD_COLOR,
     action_function={}.get,
     properties_function={}.get,
@@ -144,6 +144,7 @@ screen hex_chess_board(#board=chess.hex.Board.empty,
             fit "contain"
 
         for hex in chess.hex.Hex.range():
+            $ piece = board.storage[hex]
             button:
                 style "default"
                 xpos side*3/2*hex.q
@@ -156,12 +157,12 @@ screen hex_chess_board(#board=chess.hex.Board.empty,
                         color=(black_board_color, grey_board_color, white_board_color)[(hex.q-hex.r+1)%3],
                         side=side,
                     )
-                    text "[hex.q], [hex.r], [hex.s]":
-                        align (.5, .5)
-                        size 15
-                        textalign .5
                     fixed:
-                        # here is where the content goes
                         xysize (side*1.25, side*1.25)
                         align (.5, .5)
-                        # add "#f007"
+                        if piece is not None:
+                            add piece.displayable() align (.5, .5) fit "contain"
+                    text "[hex.q], [hex.r], [hex.s]":
+                        align (.5, .5)
+                        size 20
+                        textalign .5
