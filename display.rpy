@@ -126,3 +126,42 @@ init python:
                     rv.blit(sub, (subx, suby))
 
             return rv
+
+screen hex_chess_board(#board=chess.hex.Board.empty,
+    white_board_color=chess.hex.WHITE_BOARD_COLOR, grey_board_color=chess.hex.GREY_BOARD_COLOR, black_board_color=chess.hex.BLACK_BOARD_COLOR,
+    action_function={}.get,
+    properties_function={}.get,
+    ):
+    default side = absolute(100)
+    fixed:
+        align (.5, .5)
+        # just for the ratio, will be scaled by fit contain
+        # `side` being the side length of a hex if it is regular
+        # (which is assumed in the height calculation)
+        # which also means half of its width when its points are to the side
+        xysize (10*(3/2)*side+2*side, 11*sqrt3*side)
+        at transform:
+            fit "contain"
+
+        for hex in chess.hex.Hex.range():
+            button:
+                style "default"
+                xpos side*3/2*hex.q
+                ypos side*sqrt3*((hex.q-5)/2+hex.r)
+                action action_function(hex)
+                focus_mask True
+                fixed: # needs to be explicit otherwise fit_first is not accepted
+                    fit_first True
+                    add Hexagon(
+                        color=(black_board_color, grey_board_color, white_board_color)[(hex.q-hex.r+1)%3],
+                        side=side,
+                    )
+                    text "[hex.q], [hex.r], [hex.s]":
+                        align (.5, .5)
+                        size 15
+                        textalign .5
+                    fixed:
+                        # here is where the content goes
+                        xysize (side*1.25, side*1.25)
+                        align (.5, .5)
+                        # add "#f007"
