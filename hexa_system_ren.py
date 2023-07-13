@@ -170,8 +170,28 @@ class Board(python_object):
     active: Color|None
     castling: Castling
     enpassant: Hex|None
-    halfclock: int
-    fullclock: int
+    halfclock: int = 0
+    fullclock: int = 1
+
+    def __post_init__(self):
+        storage = self.storage
+        try:
+            lenstorage = len(storage)
+        except TypeError:
+            storage = tuple(storage)
+            lenstorage = len(storage)
+
+        if lenstorage == 121:
+            if isinstance(self.storage, tuple):
+                return
+            storage = tuple(storage)
+        elif lenstorage == 91:
+            itstorage = iter(storage)
+            storage = tuple(next(itstorage) if flag else None for flag in Board.storage_mask)
+        else:
+            raise ValueError(f"Invalid storage length : {lenstorage}. Expected 121 or 91.")
+
+        python_object.__setattr__(self, "storage", storage)
 
     def king_hex(self, color: Color):
         found = Piece(PieceType.KING, color)
@@ -184,3 +204,5 @@ class Board(python_object):
         rv = collections.Counter(itertools.compress(self.storage, Board.storage_mask))
         del rv[None]
         return rv
+
+Board.empty = Board((None,)*91, None, None, None)
