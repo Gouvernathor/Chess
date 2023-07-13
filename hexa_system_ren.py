@@ -61,8 +61,6 @@ class HexVector(python_object):
     def __mul__(self, other, /):
         return HexVector(self.q * other, self.r * other)
     __rmul__ = __mul__
-    def __truediv__(self, other, /):
-        return self * (1 / other)
     def __pos__(self, /):
         return self
     def __neg__(self, /):
@@ -162,7 +160,7 @@ class Hex(HexVector):
         if isinstance(other, Hex):
             return HexVector(self.q - other.q, self.r - other.r)
         return super().__sub__(other)
-    __mul__ = __truediv__ = (lambda *args: NotImplemented)
+    __mul__ = (lambda *args: NotImplemented)
     __pos__ = __neg__ = None
 
 from store.chess import Piece # type: ignore
