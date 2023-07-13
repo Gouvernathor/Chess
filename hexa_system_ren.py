@@ -29,8 +29,8 @@ from store.chess import PieceType # type: ignore
 
 @dataclasses.dataclass(frozen=True)
 class HexVector(python_object):
-    q: int = 0
-    r: int = 0
+    q: int
+    r: int
     @property
     @functools.lru_cache()
     def s(self) -> int:
@@ -42,6 +42,13 @@ class HexVector(python_object):
     @property
     def qrs(self) -> tuple[int, int, int]:
         return (self.q, self.r, self.s)
+
+    @property
+    def vector(self):
+        return HexVector(self.q, self.r)
+
+    def isonboard(self):
+        return Hex.isonboard(self.q, self.r)
 
     def __add__(self, other, /):
         return HexVector(self.q + other.q, self.r + other.r)
@@ -64,32 +71,67 @@ class HexVector(python_object):
         return max(abs(self.q), abs(self.r), abs(self.q+self.r))
 
 class Directions(HexVector, enum.Enum):
-    TOP = HexVector(0, -1) # -1 color
-    TOP_RIGHT = HexVector(1, -1) # +1 color
-    BOTTOM_RIGHT = HexVector(1, 0) # -1 color
-    BOTTOM = HexVector(0, 1) # +1 color
-    BOTTOM_LEFT = HexVector(-1, 1) # -1 color
-    TOP_LEFT = HexVector(-1, 0) # +1 color
-    # (-q+r)%3
+    TOP = (0, -1)
+    TOPRIGHT = (1, -1)
+    BOTTOMRIGHT = (1, 0)
+    BOTTOM = (0, 1)
+    BOTTOMLEFT = (-1, 1)
+    TOPLEFT = (-1, 0)
 
 class Hex(HexVector):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        idx = self.raw_index()
-        if not Board.storage_mask[idx]:
+        if not self.isonboard(self.q, self.r):
             raise ValueError(f"Hex out of bounds : {self}")
+
+    @staticmethod
+    def isonboard(q, r, s=None):
+        if s is not None:
+            if q+r+s != 0:
+                return False
+
+        if (q < 0) or (r < 0):
+            return False
+
+        idx = Hex.index(q, r)
+        if idx >= 121 or not Board.storage_mask[idx]:
+            return False
+
+        return True
+
+    @staticmethod
+    def index(q, r):
+        # we're wrapping at 11
+        return q + 11*r
 
     def is_neighbor(self, other):
         return abs(self - other) == 1
 
     def get_neighbors(self, dist: int = 1):
+        """
+        Gets every valid Hex within a distance of dist from self.
+        """
+        selfq, selfr = self.qr
         for q in range(-dist, dist+1):
             for r in range(max(-dist, -q-dist), min(dist, -q+dist)+1):
-                yield Hex(q, r)
+                try:
+                    rv = Hex(selfq+q, selfr+r)
+                except ValueError:
+                    pass
+                else:
+                    yield rv
+
+    def get_at_distance(self, dist: int):
+        """
+        Gets every valid Hex at a distance of exactly dist from self.
+        """
+        raise NotImplementedError
+
+    def distance(self, other):
+        return abs(self.vector - other.vector)
 
     def raw_index(self):
-        # we're wrapping at 11
-        return self.q + 11*self.r
+        return self.index(self.q, self.r)
     __index__ = raw_index
     @classmethod
     def fromindex(cls, index):
