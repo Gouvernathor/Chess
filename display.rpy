@@ -162,7 +162,7 @@ screen hex_chess_board(board=chess.hex.Board.empty,
                         align (.5, .5)
                         if piece is not None:
                             add piece.displayable() align (.5, .5) fit "contain"
-                    text "[hex.q], [hex.r], [hex.s]":
-                        align (.5, .5)
-                        size 20
-                        textalign .5
+                    # text "[hex.q], [hex.r], [hex.s]":
+                    #     align (.5, .5)
+                    #     size 25
+                    #     textalign .5

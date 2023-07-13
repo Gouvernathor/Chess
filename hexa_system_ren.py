@@ -234,6 +234,15 @@ class Board(python_object):
 
         python_object.__setattr__(self, "storage", storage)
 
+    @classmethod
+    def from_dict_placement(cls, placement: dict[Hex|tuple[int, int], Piece|None], *args, **kwargs):
+        storage = [None]*121
+        for hex, piece in placement.items():
+            if isinstance(hex, tuple):
+                hex = Hex.index(*hex)
+            storage[hex] = piece
+        return cls(tuple(storage), *args, **kwargs)
+
     def king_hex(self, color: Color):
         found = Piece(PieceType.KING, color)
         for hex in Hex.range():
@@ -373,3 +382,46 @@ class Board(python_object):
                         yield Move(hex, destination)
 
 Board.empty = Board((None,)*91, None, None)
+Board.initial = Board.from_dict_placement(
+    {
+        (5, 0) : Piece(PieceType.BISHOP, Color.BLACK),
+        (5, 1) : Piece(PieceType.BISHOP, Color.BLACK),
+        (5, 2) : Piece(PieceType.BISHOP, Color.BLACK),
+        (4, 1) : Piece(PieceType.QUEEN, Color.BLACK),
+        (6, 0) : Piece(PieceType.KING, Color.BLACK),
+        (3, 2) : Piece(PieceType.KNIGHT, Color.BLACK),
+        (7, 0) : Piece(PieceType.KNIGHT, Color.BLACK),
+        (2, 3) : Piece(PieceType.ROOK, Color.BLACK),
+        (8, 0) : Piece(PieceType.ROOK, Color.BLACK),
+        (1, 4) : Piece(PieceType.PAWN, Color.BLACK),
+        (2, 4) : Piece(PieceType.PAWN, Color.BLACK),
+        (3, 4) : Piece(PieceType.PAWN, Color.BLACK),
+        (4, 4) : Piece(PieceType.PAWN, Color.BLACK),
+        (5, 4) : Piece(PieceType.PAWN, Color.BLACK),
+        (6, 3) : Piece(PieceType.PAWN, Color.BLACK),
+        (7, 2) : Piece(PieceType.PAWN, Color.BLACK),
+        (8, 1) : Piece(PieceType.PAWN, Color.BLACK),
+        (9, 0) : Piece(PieceType.PAWN, Color.BLACK),
+
+        (5, 10) : Piece(PieceType.BISHOP, Color.WHITE),
+        (5, 9) : Piece(PieceType.BISHOP, Color.WHITE),
+        (5, 8) : Piece(PieceType.BISHOP, Color.WHITE),
+        (4, 10) : Piece(PieceType.QUEEN, Color.WHITE),
+        (6, 9) : Piece(PieceType.KING, Color.WHITE),
+        (3, 10) : Piece(PieceType.KNIGHT, Color.WHITE),
+        (7, 8) : Piece(PieceType.KNIGHT, Color.WHITE),
+        (2, 10) : Piece(PieceType.ROOK, Color.WHITE),
+        (8, 7) : Piece(PieceType.ROOK, Color.WHITE),
+        (1, 10) : Piece(PieceType.PAWN, Color.WHITE),
+        (2, 9) : Piece(PieceType.PAWN, Color.WHITE),
+        (3, 8) : Piece(PieceType.PAWN, Color.WHITE),
+        (4, 7) : Piece(PieceType.PAWN, Color.WHITE),
+        (5, 6) : Piece(PieceType.PAWN, Color.WHITE),
+        (6, 6) : Piece(PieceType.PAWN, Color.WHITE),
+        (7, 6) : Piece(PieceType.PAWN, Color.WHITE),
+        (8, 6) : Piece(PieceType.PAWN, Color.WHITE),
+        (9, 6) : Piece(PieceType.PAWN, Color.WHITE),
+    },
+    Color.WHITE,
+    None,
+)
