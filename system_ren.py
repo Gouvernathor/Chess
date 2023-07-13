@@ -287,6 +287,7 @@ class Board(python_object):
         """
         generates moves by the opposite color which attack the given square
         moves that would put or leave the king of the opposite color in check are allowed (per the rules)
+        does not generate enpassant attacks
         """
         for it_square in Square.range():
             piece = self.flat_placement[it_square]
@@ -341,7 +342,7 @@ class Board(python_object):
         for sqn, piece in enumerate(self.flat_placement):
             square = Square(sqn)
             if piece is not None and piece.color == color:
-                for move in self.generate_moves(square):
+                for move in self.generate_legal_moves(square):
                     if not self.make_move(move).is_check(color):
                         return False
 
@@ -555,6 +556,8 @@ class Board(python_object):
             if piece.color == WHITE and to_square.rankidx() != 7:
                 return False
             if piece.color == BLACK and to_square.rankidx() != 0:
+                return False
+            if promotion in (PAWN, KING):
                 return False
 
         # check the destination
