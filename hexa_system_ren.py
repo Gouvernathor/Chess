@@ -246,4 +246,130 @@ class Board(python_object):
         del rv[None]
         return rv
 
+    def is_zeroing(self, move: Move):
+        if self.storage[move.from_hex].kind == PieceType.PAWN: # type: ignore
+            return True
+        if self.storage[move.to_hex] is not None:
+            return True
+        return False
+
+    def generate_moves(self, hex: Hex|None = None):
+        if hex is None:
+            for hex in Hex.range():
+                piece = self.storage[hex]
+                if piece is not None and piece.color == self.active:
+                    yield from self.generate_moves(hex)
+            return
+
+        piece = self.storage[hex]
+        if piece is None:
+            return
+        kind = piece.kind
+        color = piece.color
+        q, r, s = hex.qrs
+        hexvector = hex.vector
+        BLACK, WHITE = Color.BLACK, Color.WHITE
+
+        if kind == PieceType.PAWN:
+            if ((s==-5) or (r==0)) if color==WHITE else ((r==10) or (s==-15)):
+                # not supposed to happen if promotion is necesarily to a non-pawn kind
+                # but just in case, to avoid oob
+                return
+
+            enpassant = self.enpassant
+            direction = Directions.TOP if color == WHITE else Directions.BOTTOM
+
+            # simple
+            if self.storage[hex+direction] is None:
+                yield Move(hex, hex+direction)
+
+                # double
+                if ((s==-11) if color==WHITE else (r==4)) and (q <= 5) or ((r==6) if color==WHITE else (s==-9)) and (q >= 5)\
+                        and self.storage[hex+direction*2] is None:
+                    yield Move(hex, hex+direction*2)
+
+            if color == WHITE:
+                leftcapture = Directions.TOPLEFT
+                rightcapture = Directions.TOPRIGHT
+            else:
+                leftcapture = Directions.BOTTOMLEFT
+                rightcapture = Directions.BOTTOMRIGHT
+
+            # capture
+            for capture in (leftcapture, rightcapture):
+                if (capture+hexvector).isonboard():
+                    destination = hex+capture
+                    target = self.storage[destination]
+                    if (enpassant == destination) or (target is not None and target.color != color):
+                        yield Move(hex, destination)
+
+        DIAGONALS = (
+            Directions.TOP + Directions.TOPRIGHT,
+            Directions.TOPRIGHT + Directions.BOTTOMRIGHT,
+            Directions.BOTTOMRIGHT + Directions.BOTTOM,
+            Directions.BOTTOM + Directions.BOTTOMLEFT,
+            Directions.BOTTOMLEFT + Directions.TOPLEFT,
+            Directions.TOPLEFT + Directions.TOP,
+        )
+
+        if kind == PieceType.KING:
+            # no castling
+
+            for direction in itertools.chain(Directions, DIAGONALS):
+                if (direction+hexvector).isonboard():
+                    destination = hex+direction
+                    target = self.storage[destination]
+                    if target is None or target.color != color:
+                        yield Move(hex, destination)
+
+        if kind in (PieceType.ROOK, PieceType.QUEEN):
+            for direction in Directions:
+                for reach in range(10):
+                    if not (reach*direction+hexvector).isonboard():
+                        break
+                    destination = hex+reach*direction
+                    target = self.storage[destination]
+                    if target is None:
+                        yield Move(hex, destination)
+                    elif target.color != color:
+                        yield Move(hex, destination)
+                        break
+                    else:
+                        break
+
+        if kind in (PieceType.BISHOP, PieceType.QUEEN):
+            for direction in DIAGONALS:
+                for reach in range(5):
+                    if not (reach*direction+hexvector).isonboard():
+                        break
+                    destination = hex+reach*direction
+                    target = self.storage[destination]
+                    if target is None:
+                        yield Move(hex, destination)
+                    elif target.color != color:
+                        yield Move(hex, destination)
+                        break
+                    else:
+                        break
+
+        if kind == PieceType.KNIGHT:
+            for direction in (2*Directions.TOP+Directions.TOPRIGHT,
+                              2*Directions.TOPRIGHT+Directions.TOP,
+                              2*Directions.TOPRIGHT+Directions.BOTTOMRIGHT,
+                              2*Directions.BOTTOMRIGHT+Directions.TOPRIGHT,
+                              2*Directions.BOTTOMRIGHT+Directions.BOTTOM,
+                              2*Directions.BOTTOM+Directions.BOTTOMRIGHT,
+                              2*Directions.BOTTOM+Directions.BOTTOMLEFT,
+                              2*Directions.BOTTOMLEFT+Directions.BOTTOM,
+                              2*Directions.BOTTOMLEFT+Directions.TOPLEFT,
+                              2*Directions.TOPLEFT+Directions.BOTTOMLEFT,
+                              2*Directions.TOPLEFT+Directions.TOP,
+                              2*Directions.TOP+Directions.TOPLEFT,
+                              ):
+                if (direction+hexvector).isonboard():
+                    destination = hex+direction
+                    target = self.storage[destination]
+                    if target is None or target.color != color:
+                        yield Move(hex, destination)
+
 Board.empty = Board((None,)*91, None, None)
