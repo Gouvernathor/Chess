@@ -33,31 +33,37 @@ screen chess_board(board=chess.Board.empty,
 
 init python:
     from math import sqrt
+    sqrt3 = sqrt(3)
 
     class Hexagon(renpy.Displayable):
-        def __init__(self, color, linewidth=0, regular=False, side=None, **properties):
+        def __init__(self, color, linewidth=0, regular=False, side=None, flat_top=True, **properties):
             """
             Regular imposes a regular hexagon within the available space.
             Side imposes a regular hexagon with the given side length, overriding regular.
             """
-            # TODO: merge the two attributes but keep the two parameters
+            # TODO: merge the regular and side attributes but keep the two parameters
+            properties.setdefault("subpixel", True)
             super().__init__(**properties)
             self.color = color
             self.linewidth = linewidth
             self.regular = regular
             self.side = side
+            self.flat_top = flat_top
 
         # TODO: add a static method passed a canvas and some sizes and writes the thing on it
         # so that the process can be scaled
         def render(self, width, height, st, at):
             if self.side is not None:
                 height = 2*self.side
-                width = sqrt(3)*self.side
+                width = sqrt3*self.side
 
-            rv = renpy.Render(width, height)
+            if self.flat_top:
+                rv = renpy.Render(height, width)
+            else:
+                rv = renpy.Render(width, height)
 
             if self.regular:
-                factor = sqrt(3)/2
+                factor = sqrt3/2
                 if width > factor*height:
                     newidth = factor*height
                     newheight = height
@@ -66,7 +72,10 @@ init python:
                     newheight = width/factor
                 subx = (width-newidth)/2
                 suby = (height-newheight)/2
-                sub = rv.subsurface((subx, suby, newidth, newheight))
+                if self.flat_top:
+                    sub = rv.subsurface((sub7, subx, newheight, newidth))
+                else:
+                    sub = rv.subsurface((subx, suby, newidth, newheight))
                 cv = sub.canvas()
             else:
                 newidth = width
@@ -82,7 +91,6 @@ init python:
             delta = b**2-4*a*c
             x1 = (-b+sqrt(delta))/(2*a)
             x2 = (-b-sqrt(delta))/(2*a)
-            print(x1, x2, newidth, newheight)
             if 0 < x1 < newheight/2:
                 x = x1
             else:
@@ -93,20 +101,28 @@ init python:
             topright_point = (newidth, x)
             bottomright_point = (newidth, newheight-x)
 
+            pointslist = [
+                top_point,
+                topright_point,
+                bottomright_point,
+                bottom_point,
+                bottomleft_point,
+                topleft_point,
+            ]
+
+            if self.flat_top:
+                pointslist = [(y, x) for (x, y) in pointslist]
+
             cv.polygon(
                 self.color,
-                [
-                    top_point,
-                    topright_point,
-                    bottomright_point,
-                    bottom_point,
-                    bottomleft_point,
-                    topleft_point,
-                ],
+                pointslist,
                 self.linewidth,
             )
 
             if self.regular:
-                rv.blit(sub, (subx, suby))
+                if self.flat_top:
+                    rv.blit(sub, (suby, subx))
+                else:
+                    rv.blit(sub, (subx, suby))
 
             return rv
