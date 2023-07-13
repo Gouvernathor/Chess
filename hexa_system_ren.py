@@ -243,6 +243,14 @@ class Board(python_object):
 
         python_object.__setattr__(self, "storage", storage)
 
+    # @classmethod
+    # def one_at_center(cls, piece: Piece|PieceType):
+    #     if isinstance(piece, PieceType):
+    #         piece = Piece(piece, Color.WHITE)
+    #     storage = [None]*121
+    #     storage[Hex(5, 5)] = piece
+    #     return cls(tuple(storage), None, None)
+
     @classmethod
     def from_dict_placement(cls, placement: dict[Hex|tuple[int, int], Piece|None], *args, **kwargs):
         storage = [None]*121
@@ -389,6 +397,161 @@ class Board(python_object):
                     target = self.storage[destination]
                     if target is None or target.color != color:
                         yield Move(hex, destination)
+
+    def make_move(self, move: Move):
+        from_hex = move.from_hex
+        to_hex = move.to_hex
+        promotion = move.promotion
+
+        enpassant = None
+        halfclock = self.halfclock + 1
+        fullclock = self.fullclock + 1
+        if self.active == Color.BLACK:
+            fullclock += 1
+        storage = list(self.storage)
+
+        if self.is_zeroing(move):
+            halfclock = 0
+
+        piece = storage[from_hex]
+        if piece is None:
+            raise ValueError("No piece on hex, invalid move")
+        storage[from_hex] = None
+
+        # no castling
+
+        # handle enpassant
+        if piece.kind == PieceType.PAWN:
+            move_vector = move.hex_vector
+            # creating an enpassant opportunity
+            if move_vector == Directions.TOP*2:
+                enpassant = from_hex + Directions.TOP
+            elif move_vector == Directions.BOTTOM*2:
+                enpassant = from_hex + Directions.BOTTOM
+            # capturing enpassant
+            elif move_vector not in (Directions.TOP, Directions.BOTTOM) and storage[to_hex] is None:
+                if move_vector in (Directions.TOPLEFT, Directions.TOPRIGHT):
+                    eaten = to_hex + Directions.BOTTOM
+                else:
+                    eaten = to_hex + Directions.TOP
+                storage[eaten] = None
+
+        # handle promotion
+        if promotion is not None:
+            piece = Piece(promotion, piece.color)
+
+        # no castling
+
+        # handle normal move of the piece
+        storage[to_hex] = piece
+
+        return Board(tuple(storage), Color(not self.active), enpassant, halfclock, fullclock)
+
+    def is_legal(self, move: Move, check_check=True, check_turn=True):
+        from_hex = move.from_hex
+        to_hex = move.to_hex
+        promotion = move.promotion
+
+        # check the moving piece
+        piece = self.storage[from_hex]
+        if piece is None:
+            return False
+
+        # check the turn
+        if check_turn and piece.color != self.active:
+            return False
+
+        # check promotion
+        if promotion is not None:
+            if piece.kind != PieceType.PAWN:
+                return False
+            if piece.color == Color.WHITE:
+                if to_hex.s != -5 and to_hex.r != 0:
+                    return False
+            else:
+                if to_hex.r != 10 and to_hex.s != -15:
+                    return False
+            if promotion in (PieceType.KING, PieceType.PAWN):
+                return False
+
+        # check the destination
+        target = self.storage[to_hex]
+        if target is not None:
+            if target.color == piece.color:
+                return False
+
+        # kind-specific check
+        if move.replace(promotion=None) not in self.generate_moves(from_hex):
+            return False
+
+        # check self-check
+        if check_check:
+            if self.make_move(move).is_check(piece.color):
+                return False
+
+        return True
+
+    def generate_legal_moves(self, hex: Hex|None = None):
+        for move in self.generate_moves(hex):
+            if self.is_legal(move):
+                yield move
+
+    def generate_attackers(self, hex: Hex, color: Color):
+        """
+        generate moves by other colors which attack the given hex
+        moves that would put or leave the opposite king in check are allowed
+        enpassant moves are not generated
+        """
+        for it_hex in Hex.range():
+            piece = self.storage[it_hex]
+            if (piece is None) or (piece.color == color):
+                continue
+            for move in self.generate_moves(it_hex):
+                if move.to_hex == hex:
+                    yield it_hex
+                    break
+
+    def is_under_attack(self, hex: Hex, color: Color):
+        try:
+            next(self.generate_attackers(hex, color))
+        except StopIteration:
+            return False
+        else:
+            return True
+
+    def generate_checkers(self, color: Color):
+        """
+        generate moves by other colors which attack the king
+        moves that would put or leave the opposite king in check are allowed
+        """
+        yield from self.generate_attackers(self.king_hex(color), color)
+
+    def is_check(self, color: Color|None = None):
+        if color is None:
+            return self.is_check(Color.WHITE) or self.is_check(Color.BLACK)
+
+        try:
+            next(self.generate_checkers(color))
+        except StopIteration:
+            return False
+        else:
+            return True
+
+    def is_stalemate(self, color: Color|None = None):
+        if color is None:
+            return self.is_stalemate(Color.WHITE) and self.is_stalemate(Color.BLACK)
+
+        for hxn, piece in enumerate(self.storage):
+            hex = Hex.fromindex(hxn)
+            if piece is not None and piece.color == color:
+                for move in self.generate_legal_moves(hex):
+                    if not self.make_move(move).is_check(color):
+                        return False
+
+        return True
+
+    def is_checkmate(self, color: Color|None = None):
+        return self.is_check(color) and self.is_stalemate(color)
 
 Board.empty = Board((None,)*91, None, None)
 Board.initial = Board.from_dict_placement(
