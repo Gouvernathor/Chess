@@ -186,7 +186,7 @@ class Board(python_object):
     contains the same information as a FEN
     """
 
-    flat_placement: tuple[Piece|None] # type: tuple[((Piece|None),)*64]
+    flat_placement: tuple[Piece|None, ...] # type: tuple[((Piece|None),)*64]
     active: Color|None
     castling: Castling
     enpassant: Square|None # aka ep_square
