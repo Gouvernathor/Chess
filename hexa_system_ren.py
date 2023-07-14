@@ -96,7 +96,7 @@ class Hex(HexVector):
             return False
 
         idx = Hex.index(q, r)
-        if idx >= 121 or not Board.storage_mask[idx]:
+        if idx >= 121 or not Board.STORAGE_MASK[idx]:
             return False
 
         return True
@@ -145,7 +145,7 @@ class Hex(HexVector):
         Very complex method, conceptually.
         Generates the Hexes in the order they are stored internally.
         """
-        for k in itertools.compress(itertools.count(), Board.storage_mask):
+        for k in itertools.compress(itertools.count(), Board.STORAGE_MASK):
             yield cls.fromindex(k)
 
     def __str__(self):
@@ -203,7 +203,7 @@ class Board(python_object):
     # Going vertically in 2d means going straignt vertically in hex.
     # Going horizontally in 2d means going slightly down and to the right in hex.
     # Going slightly up and to the right in hex means going in slash-diagonal in 2d.
-    storage_mask = (
+    STORAGE_MASK = (
         0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
         0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
         0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -236,7 +236,7 @@ class Board(python_object):
             storage = tuple(storage)
         elif lenstorage == 91:
             itstorage = iter(storage)
-            storage = tuple(next(itstorage) if flag else None for flag in Board.storage_mask)
+            storage = tuple(next(itstorage) if flag else None for flag in Board.STORAGE_MASK)
         else:
             raise ValueError(f"Invalid storage length : {lenstorage}. Expected 121 or 91.")
 
@@ -275,7 +275,7 @@ class Board(python_object):
         raise ValueError(f"King not found for {color.name}")
 
     def pieces_counter(self):
-        rv = collections.Counter(itertools.compress(self.storage, Board.storage_mask))
+        rv = collections.Counter(itertools.compress(self.storage, Board.STORAGE_MASK))
         del rv[None]
         return rv
 
