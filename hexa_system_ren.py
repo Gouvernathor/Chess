@@ -190,7 +190,7 @@ Castling = NotImplementedError # TODO
 
 @dataclasses.dataclass(frozen=True)
 class Board(python_object):
-    storage: tuple[Piece|None]
+    storage: tuple[Piece|None, ...] # length 121
     # qr representation : using a wrapping 1d storage,
     # starting from the top left, going right,
     # then wrapping under until the bottom right
