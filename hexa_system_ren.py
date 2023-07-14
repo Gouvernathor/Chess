@@ -148,6 +148,9 @@ class Hex(HexVector):
         for k in itertools.compress(itertools.count(), Board.storage_mask):
             yield cls.fromindex(k)
 
+    def __str__(self):
+        return str(self.qrs)
+
     # disable these operations between Hexes, but allow them with HexVectors
     def __add__(self, other, /):
         if isinstance(other, Hex):
@@ -161,7 +164,7 @@ class Hex(HexVector):
             return HexVector(self.q - other.q, self.r - other.r)
         return super().__sub__(other)
     __mul__ = (lambda *args: NotImplemented)
-    __pos__ = __neg__ = None
+    __pos__ = __neg__ = None # type: ignore
 
 from store.chess import Piece # type: ignore
 
@@ -257,6 +260,14 @@ class Board(python_object):
                 hex = Hex.index(*hex)
             storage[hex] = piece
         return cls(tuple(storage), *args, **kwargs)
+
+    def to_dict_placement(self):
+        rv = {}
+        for hex in Hex.range():
+            piece = self.storage[hex]
+            if piece is not None:
+                rv[hex] = piece
+        return rv
 
     def king_hex(self, color: Color):
         found = Piece(PieceType.KING, color)
@@ -550,6 +561,17 @@ class Board(python_object):
 
     def is_checkmate(self, color: Color|None = None):
         return self.is_check(color) and self.is_stalemate(color)
+
+    def algebraic_suffix(self, move: Move, color: Color|None = None, dagger=True):
+        after = self.make_move(move)
+        if after.is_check(color):
+            if after.is_checkmate(color):
+                return "‡" if dagger else "#"
+            return "†" if dagger else "+"
+        return ""
+
+    def notation(self, move: Move, color: Color|None = None):
+        raise NotImplementedError
 
 Board.empty = Board((None,)*91, None, None)
 Board.initial = Board.from_dict_placement(
