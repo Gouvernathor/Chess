@@ -186,8 +186,6 @@ class Move(python_object):
     def hex_vector(self):
         return self.to_hex - self.from_hex
 
-Castling = NotImplementedError # TODO
-
 @dataclasses.dataclass(frozen=True)
 class Board(python_object):
     storage: tuple[Piece|None, ...] # length 121
