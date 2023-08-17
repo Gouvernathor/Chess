@@ -696,8 +696,14 @@ class Board(python_object):
     def algebraic_suffix(self, move: Move, color: Color|None = None, dagger=True):
         """
         returns the suffix of the move in algebraic notation
-        only checks for the given color if passed, otherwise checks for any color
+        only checks for the given color if passed, otherwise figures it out from the move
         """
+        if color is None:
+            moving_piece = self.flat_placement[move.from_square]
+            if moving_piece is None:
+                # invalid move
+                return ""
+            color = Color(not moving_piece.color)
         after = self.make_move(move)
         if after.is_check(color):
             if after.is_stalemate(color):

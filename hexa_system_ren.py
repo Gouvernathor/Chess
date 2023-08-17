@@ -586,6 +586,18 @@ class Board(python_object):
         return self.is_check(color) and self.is_stalemate(color)
 
     def algebraic_suffix(self, move: Move, color: Color|None = None, dagger=True):
+        """
+        Should check all colors except the one moving (to support 3+ colors),
+        but currently only checks the one other color between black and white.
+        In any case a check sign on a move mark when playing 3+ colors doesn't
+        mean much if you don't know what color it checks.
+        """
+        if color is None:
+            moving_piece = self.storage[move.from_hex]
+            if moving_piece is None:
+                # invalid move
+                return ""
+            color = Color(not moving_piece.color)
         after = self.make_move(move)
         if after.is_check(color):
             if after.is_checkmate(color):
