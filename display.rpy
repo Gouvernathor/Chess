@@ -131,6 +131,7 @@ screen hex_chess_board(board=chess.hex.Board.empty,
     white_board_color=chess.hex.WHITE_BOARD_COLOR, grey_board_color=chess.hex.GREY_BOARD_COLOR, black_board_color=chess.hex.BLACK_BOARD_COLOR,
     action_function={}.get,
     properties_function={}.get,
+    show_coordinates=False,
     ):
     default side = absolute(100)
     fixed:
@@ -158,11 +159,12 @@ screen hex_chess_board(board=chess.hex.Board.empty,
                         side=side,
                     )
                     fixed:
-                        xysize (side*1.25, side*1.25)
+                        xysize (side*1.25, side*1.25) # value obtained by trial and error
                         align (.5, .5)
                         if piece is not None:
                             add piece.displayable() align (.5, .5) fit "contain"
-                    # text "[hex.q], [hex.r], [hex.s]":
-                    #     align (.5, .5)
-                    #     size 25
-                    #     textalign .5
+                    if show_coordinates:
+                        text "[hex!s]":
+                            align (.5, .5)
+                            size 25
+                            textalign .5
