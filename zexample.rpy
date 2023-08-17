@@ -31,7 +31,7 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
     while not chosen_move:
         if board.is_check(board.active):
             # highlight the king and the checking pieces
-            python:
+            python hide:
                 store.highlight_properties[board.king_square(board.active)] |= orange_highlight
                 for checkermove in board.generate_checkers(board.active):
                     store.highlight_properties[checkermove.from_square] |= red_highlight
@@ -54,10 +54,7 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
                     if piece.color == board.active:
                         renpy.notify("piece of the active color")
                         store.highlight_properties.clear()
-                        global bra
-                        bra = [_return]
                         for move in board.generate_legal_moves(_return):
-                            bra.append(move)
                             store.highlight_properties[move.to_square] |= blue_highlight
                             store.highlight_properties[move.to_square]["action"] = Return(move)
 
