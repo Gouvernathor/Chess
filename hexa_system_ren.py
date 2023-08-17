@@ -10,7 +10,6 @@ import dataclasses
 import enum
 import functools
 import itertools
-import math
 
 from store import chess # type: ignore
 
@@ -59,7 +58,9 @@ class HexVector(python_object):
     def __rsub__(self, other, /):
         return -self + other
     def __mul__(self, other, /):
-        return HexVector(self.q * other, self.r * other)
+        if isinstance(other, int):
+            return HexVector(self.q * other, self.r * other)
+        return NotImplemented
     __rmul__ = __mul__
     def __pos__(self, /):
         return self
