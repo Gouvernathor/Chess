@@ -503,6 +503,30 @@ class Board(python_object):
             if self.is_legal(move):
                 yield move
 
+    def taken_hex(self, move: Move):
+        """
+        Returns a hex this move would take, or None.
+        Supports invalid moves where no piece is present to make it.
+        Does not check for invalidity when moving and target pieces are of the same color.
+        """
+        # simple case
+        to_hex = move.to_hex
+        if self.storage[to_hex] is not None:
+            return to_hex
+
+        # enpassant
+        from_hex = move.from_hex
+        attacker = self.storage[from_hex]
+        if attacker is not None and attacker.kind == PieceType.PAWN:
+            if to_hex == self.enpassant:
+                move_vector = move.hex_vector
+                if move_vector in (Directions.TOPLEFT, Directions.TOPRIGHT):
+                    return to_hex + Directions.BOTTOM
+                elif move_vector in (Directions.BOTTOMLEFT, Directions.BOTTOMRIGHT):
+                    return to_hex + Directions.TOP
+
+        return None
+
     def generate_attackers(self, hex: Hex, color: Color):
         """
         generate moves by other colors which attack the given hex
@@ -514,7 +538,7 @@ class Board(python_object):
             if (piece is None) or (piece.color == color):
                 continue
             for move in self.generate_moves(it_hex):
-                if move.to_hex == hex:
+                if self.taken_hex(move) == hex and self.is_legal(move, check_check=False, check_turn=False):
                     yield it_hex
                     break
 

@@ -283,11 +283,32 @@ class Board(python_object):
             return True
         return False
 
+    def taken_square(self, move: Move):
+        """
+        Returns a square this move would take, or None.
+        Supports invalid moves where no piece is present to make it.
+        Does not check for invalidity when moving and target pieces are of the same color.
+        """
+        # simple case
+        to_square = move.to_square
+        if self.flat_placement[to_square] is not None:
+            return to_square
+
+        # enpassant
+        from_square = move.from_square
+        attacker = self.flat_placement[from_square]
+        if attacker is not None and attacker.kind == PAWN:
+            move_filediff = move.diff_tuple()[0]
+            if move_filediff and (to_square == self.enpassant):
+                return Square.square(to_square.fileidx(), from_square.rankidx())
+
+        return None
+
     def generate_attackers(self, square: Square, color: Color):
         """
         generates moves by the opposite color which attack the given square
         moves that would put or leave the king of the opposite color in check are allowed (per the rules)
-        does not generate enpassant attacks
+        generates enpassant attacks, even though those would never put a king in check
         """
         for it_square in Square.range():
             piece = self.flat_placement[it_square]
@@ -295,7 +316,7 @@ class Board(python_object):
                 continue
             for move in self.generate_moves(it_square, castling=False):
             # castling = False because a castle move could never kill : the destination squares for both the king and the rook must be empty
-                if move.to_square == square and self.is_legal(move, check_check=False, check_turn=False):
+                if self.taken_square(move) == square and self.is_legal(move, check_check=False, check_turn=False):
                     yield move
                     break
 
