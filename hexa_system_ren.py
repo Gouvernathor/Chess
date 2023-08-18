@@ -372,7 +372,7 @@ class Board(python_object):
 
         if kind in (PieceType.ROOK, PieceType.QUEEN):
             for direction in Directions:
-                for reach in range(10):
+                for reach in range(1, 11):
                     if not (reach*direction+hexvector).isonboard():
                         break
                     destination = hex+reach*direction
@@ -387,7 +387,7 @@ class Board(python_object):
 
         if kind in (PieceType.BISHOP, PieceType.QUEEN):
             for direction in DIAGONALS:
-                for reach in range(5):
+                for reach in range(1, 6):
                     if not (reach*direction+hexvector).isonboard():
                         break
                     destination = hex+reach*direction
