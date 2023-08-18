@@ -287,6 +287,20 @@ class Board(python_object):
             return True
         return False
 
+    @staticmethod
+    def is_promotion_hex(hex: Hex, color:Color|None = None):
+        """
+        Only supports black/white boards, for the moment.
+        Checks all the promotion tiles, or only those of a given color if given one.
+        """
+        if color in (Color.BLACK, None):
+            if hex.r == 10 or hex.s == -15:
+                return True
+        if color in (Color.WHITE, None):
+            if hex.s == -5 or hex.r == 0:
+                return True
+        return False
+
     def generate_moves(self, hex: Hex|None = None):
         if hex is None:
             for hex in Hex.range():
@@ -305,7 +319,7 @@ class Board(python_object):
         BLACK, WHITE = Color.BLACK, Color.WHITE
 
         if kind == PieceType.PAWN:
-            if ((s==-5) or (r==0)) if color==WHITE else ((r==10) or (s==-15)):
+            if self.is_promotion_hex(hex, color):
                 # not supposed to happen if promotion is necesarily to a non-pawn kind
                 # but just in case, to avoid oob
                 return
