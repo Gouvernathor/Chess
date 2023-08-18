@@ -130,7 +130,8 @@ init python:
 screen hex_chess_board(board=chess.hex.Board.empty,
     white_board_color=chess.hex.WHITE_BOARD_COLOR, grey_board_color=chess.hex.GREY_BOARD_COLOR, black_board_color=chess.hex.BLACK_BOARD_COLOR,
     action_function={}.get,
-    properties_function={}.get,
+    button_properties_function={}.get,
+    hexagon_properties_function={}.get,
     show_coordinates=False,
     ):
     default side = absolute(100)
@@ -152,11 +153,13 @@ screen hex_chess_board(board=chess.hex.Board.empty,
                 ypos side*sqrt3*((hex.q-5)/2+hex.r)
                 action action_function(hex)
                 focus_mask True
+                properties button_properties_function(hex)
                 fixed: # needs to be explicit otherwise fit_first is not accepted
                     fit_first True
                     add Hexagon(
                         color=(black_board_color, grey_board_color, white_board_color)[(hex.q-hex.r+1)%3],
                         side=side,
+                        **(hexagon_properties_function(hex) or {}),
                     )
                     fixed:
                         xysize (side*1.25, side*1.25) # value obtained by trial and error
