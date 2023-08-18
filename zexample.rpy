@@ -6,14 +6,6 @@ default board = chess.Board.initial
 default move_history = []
 default eaten = {chess.BLACK: collections.Counter(), chess.WHITE: collections.Counter()}
 
-init python:
-    def actuate_eaten():
-        etn = initial_counter - board.pieces_counter()
-        eaten[chess.BLACK].clear()
-        eaten[chess.WHITE].clear()
-        for piece in sorted(etn.elements(), reverse=True):
-            eaten[piece.color][piece.kind] += 1
-
 define blue_highlight = dict(
     foreground="#77ffff77",
 )
@@ -102,7 +94,12 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
     $ board = board.make_move(chosen_move)
 
     # updating loss counts
-    $ actuate_eaten()
+    python hide:
+        etn = initial_counter - board.pieces_counter()
+        eaten[chess.BLACK].clear()
+        eaten[chess.WHITE].clear()
+        for piece in sorted(etn.elements(), reverse=True):
+            eaten[piece.color][piece.kind] += 1
 
     # refresh
     show screen main_chess_display(board, sensitive=False)
