@@ -588,11 +588,12 @@ class Board(python_object):
             return self.is_stalemate(Color.WHITE) and self.is_stalemate(Color.BLACK)
 
         for hxn, piece in enumerate(self.storage):
-            hex = Hex.fromindex(hxn)
-            if piece is not None and piece.color == color:
-                for move in self.generate_legal_moves(hex):
-                    if not self.make_move(move).is_check(color):
-                        return False
+            if self.STORAGE_MASK[hxn]:
+                hex = Hex.fromindex(hxn)
+                if piece is not None and piece.color == color:
+                    for move in self.generate_legal_moves(hex):
+                        if not self.make_move(move).is_check(color):
+                            return False
 
         return True
 
