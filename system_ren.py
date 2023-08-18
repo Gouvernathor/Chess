@@ -174,9 +174,7 @@ class Castling(collections.namedtuple("Castling", ("white_kingside", "white_quee
             rv += "k"
         if self.black_queenside:
             rv += "q"
-        if not rv:
-            rv = "-"
-        return rv
+        return rv or "-"
 
     __str__ = to_fen
 
