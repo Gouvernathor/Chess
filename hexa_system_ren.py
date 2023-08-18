@@ -620,8 +620,50 @@ class Board(python_object):
             return "†" if dagger else "+"
         return ""
 
-    def notation(self, move: Move, color: Color|None = None):
-        raise NotImplementedError
+    def notation(self, move: Move, long=False, pawn=False, figure=False):
+        """
+        Returns the string notation of the move, containing
+        (1) the moving piece, (2) the starting hex, (3) the capture sign, (4) the destination hex, (5) the promotion, (6) the check/mate/misc suffix
+        (1) will be empty for pawns if pawn is False
+        (1) will be a unicode figure if figure is True, a cased letter otherwise
+        (2) may be nothing or only contain one character, if long is False (not currently implemented)
+        (3) will be x or nothing
+        (5) will be nothing if there is no promotion
+        (6) will be nothing if there is no miscellanous information
+        """
+        from_hex = move.from_hex
+        to_hex = move.to_hex
+        promotion = move.promotion
+        piece = self.storage[from_hex]
+        if piece is None:
+            # invalid move
+            piece = Piece(PieceType.PAWN, self.active)
+
+        if pawn or (piece.kind != PieceType.PAWN):
+            if figure:
+                piece_letter = piece.unicode_symbol()
+            else:
+                piece_letter = piece.symbol()
+        else:
+            piece_letter = ""
+
+        capture = ""
+        if self.taken_hex(move) is not None:
+            capture = "x"
+
+        destination = to_hex.qrs
+
+        if promotion is None:
+            promotion = ""
+        else:
+            promotion = promotion.value.upper()
+
+        suffix = self.algebraic_suffix(move)
+
+        if True or long or not self.is_legal(move):
+            origin = from_hex.qrs
+
+        return f"{piece_letter}{origin}{capture}{destination}{promotion}{suffix}"
 
 Board.empty = Board((None,)*91, None, None)
 Board.initial = Board.from_dict_placement(
