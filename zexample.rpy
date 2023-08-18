@@ -42,20 +42,18 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
             else:
                 piece = board.flat_placement[_return]
 
+                store.highlight_properties.clear()
                 if piece is not None:
                     if piece.color == board.active:
                         renpy.notify("piece of the active color")
-                        store.highlight_properties.clear()
                         for move in board.generate_legal_moves(_return):
                             store.highlight_properties[move.to_square] |= blue_highlight
                             store.highlight_properties[move.to_square]["action"] = Return(move)
 
                     else:
                         renpy.notify("piece not of the active color")
-                        store.highlight_properties.clear()
                 else:
                     renpy.notify("no piece found at location")
-                    store.highlight_properties.clear()
 
     show screen main_chess_display(board, sensitive=False)
     # keep it visible
