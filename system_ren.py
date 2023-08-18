@@ -714,8 +714,8 @@ class Board(python_object):
     def algebraic_notation_tuple(self, move: Move, long=False, pawn=False, figure=False):
         """
         Returns the algebraic notation tuple of the move, containing
-        (1) the moving piece, (2) the starting square, (3) the capture flag, (4) the destination square, (5) the promotion, (6) check/mate/misc suffix,
-        (1) will be empty if pawn is False
+        (1) the moving piece, (2) the starting square, (3) the capture flag, (4) the destination square, (5) the promotion, (6) check/mate/misc suffix
+        (1) will be empty for pawns if pawn is False
         (1) will be a unicode figure if figure is True, a cased letter otherwise
         (2) may be empty or only contain one character, if long is False
         (3) will be x or empty
@@ -743,8 +743,7 @@ class Board(python_object):
             piece_letter = ""
 
         capture = ""
-        if self.flat_placement[to_square] is not None:
-            # TODO: en passant
+        if self.taken_square(move) is not None:
             capture = "x"
 
         destination = to_square.name.lower()

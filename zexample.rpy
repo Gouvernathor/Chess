@@ -79,9 +79,8 @@ label game_loop(chosen_move=None, highlight_properties=collections.defaultdict(d
             "[symbols[3]] Knight [symbols[3]]":
                 $ chosen_move = chosen_move.replace(promotion=chess.KNIGHT)
 
-    if board.flat_placement[chosen_move.to_square] is not None:
+    if board.taken_square(chosen_move) is not None:
         # this is a take
-        # TODO: include en passant
         $ renpy.notify("take !")
         play sound take
 
