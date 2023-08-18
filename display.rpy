@@ -132,7 +132,7 @@ screen hex_chess_board(board=chess.hex.Board.empty,
     action_function={}.get,
     button_properties_function={}.get,
     hexagon_properties_function={}.get,
-    show_coordinates=False,
+    locations=False,
     ):
     default side = absolute(100)
     fixed:
@@ -166,8 +166,9 @@ screen hex_chess_board(board=chess.hex.Board.empty,
                         align (.5, .5)
                         if piece is not None:
                             add piece.displayable() align (.5, .5) fit "contain"
-                    if show_coordinates:
-                        text "[hex!s]":
-                            align (.5, .5)
-                            size 25
-                            textalign .5
+                    text "[hex!s]":
+                        align (.5, .5)
+                        size 25
+                        textalign .5
+                        at transform:
+                            alpha locations

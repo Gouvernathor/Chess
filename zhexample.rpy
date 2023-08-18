@@ -6,6 +6,9 @@ default hexboard = chess.hex.Board.initial
 default hex_move_history = []
 default hex_eaten = {chess.hex.Color.WHITE: collections.Counter(), chess.hex.Color.BLACK: collections.Counter()}
     # replace in hex_game_loop if using more colors
+    # for more colors, will either represent the eaten pieces *of* each color (instead of *by* each color),
+    # or will need subcounters i.e red ate 2 blue pawns and 1 yellow pawn
+    # and that will require a different registering implementation
 
 define __blue_highlight = dict(
     at=Transform(matrixcolor=TintMatrix("#77f")),
@@ -118,9 +121,9 @@ label __stalemate(color=hexboard.active):
     "Stalemate !\n[color.name!cl] has no available move."
     return
 
-screen hex_chess_display(hexboard, *args, sensitive=True, **kwargs):
+screen hex_chess_display(hexboard, *args, sensitive=True, locations=.3, **kwargs):
     sensitive sensitive
-    use hex_chess_board(hexboard, *args, **kwargs)
+    use hex_chess_board(hexboard, *args, locations=locations, **kwargs)
 
     vbox:
         at topleft
