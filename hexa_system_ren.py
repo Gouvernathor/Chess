@@ -554,7 +554,7 @@ class Board(python_object):
                 continue
             for move in self.generate_moves(it_hex):
                 if self.taken_hex(move) == hex and self.is_legal(move, check_check=False, check_turn=False):
-                    yield it_hex
+                    yield move
                     break
 
     def is_under_attack(self, hex: Hex, color: Color):
