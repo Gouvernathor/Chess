@@ -332,7 +332,7 @@ class Board(python_object):
                 yield Move(hex, hex+direction)
 
                 # double
-                if ((s==-11) if color==WHITE else (r==4)) and (q <= 5) or ((r==6) if color==WHITE else (s==-9)) and (q >= 5)\
+                if (((s==-11) if color==WHITE else (r==4)) and (q <= 5) or ((r==6) if color==WHITE else (s==-9)) and (q >= 5))\
                         and self.storage[hex+direction*2] is None:
                     yield Move(hex, hex+direction*2)
 
